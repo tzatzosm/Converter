@@ -9,19 +9,19 @@ import SwiftUI
 
 struct CurrencySelection: View {
     @Binding var isPresented: Bool
-    @Binding var selectedCurrency: String
-    @State var currencies: [String]
+    @ObservedObject private(set) var viewModel: ViewModel
     
     var body: some View {
         List {
-            ForEach(currencies, id: \.self) { currency in
-                let tint: Color = currency == selectedCurrency ? .red : .black
+            ForEach(viewModel.currencies, id: \.self) { currency in
+                let tint: Color = currency == viewModel.selectedCurrency ? .red : .black
                 Button {
-                    _selectedCurrency.wrappedValue = currency
+                    viewModel.selectedCurrency = currency
                     isPresented = false
                 } label: {
                     Text(currency)
-                }.tint(tint)
+                }
+                .tint(tint)
             }
         }
     }
@@ -31,7 +31,6 @@ struct CurrencySelection_Previews: PreviewProvider {
     static var previews: some View {
         CurrencySelection(
             isPresented: .constant(true),
-            selectedCurrency: .constant("EUR"),
-            currencies: ["EUR", "USD"])
+            viewModel: .init(container: .defaultValue, selectedCurrency: .constant("EUR")))
     }
 }

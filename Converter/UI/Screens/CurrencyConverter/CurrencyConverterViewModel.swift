@@ -12,7 +12,8 @@ import Combine
 
 extension CurrencyConverter {
     struct Routing: Equatable {
-        var currencySelection: String?
+        var sellCurrencySelection: Bool = false
+        var receiveCurrencySelection: Bool = false
     }
 }
 
@@ -32,7 +33,7 @@ extension CurrencyConverter {
             case error(String)
         }
         
-        private let currencyExchangeService: AnyCurrencyExchangeService
+        
         
         // State
         @Published var routingState: Routing
@@ -61,6 +62,7 @@ extension CurrencyConverter {
         
         // Misc
         let container: DIContainer
+        private let currencyExchangeService: AnyCurrencyExchangeService
         private var cancelBag = CancelBag()
         
         init(

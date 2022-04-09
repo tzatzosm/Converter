@@ -11,9 +11,6 @@ struct CurrencyConverter: View {
     
     @ObservedObject private(set) var viewModel: ViewModel
     
-    @State var sellCurrencyCodeSelected: Bool = false
-    @State var receiveCurrencyCodeSelected: Bool = false
-    
     var body: some View {
         NavigationView {
             self.content
@@ -21,16 +18,18 @@ struct CurrencyConverter: View {
                 .navigationViewStyle(.stack)
                 .navigationBarTitleDisplayMode(.inline)
                 .navigationTitle("Currency Converter")
-                .sheet(isPresented: $sellCurrencyCodeSelected) {
+                .sheet(isPresented: $viewModel.routingState.sellCurrencySelection) {
                     CurrencySelection(
-                        isPresented: $sellCurrencyCodeSelected,
-                        selectedCurrency: $viewModel.sellCurrency,
-                        currencies: viewModel.currencies)
-                }.sheet(isPresented: $receiveCurrencyCodeSelected) {
+                        isPresented: $viewModel.routingState.sellCurrencySelection,
+                        viewModel: .init(
+                            container: viewModel.container,
+                            selectedCurrency: $viewModel.sellCurrency))
+                }.sheet(isPresented: $viewModel.routingState.receiveCurrencySelection) {
                     CurrencySelection(
-                        isPresented: $receiveCurrencyCodeSelected,
-                        selectedCurrency: $viewModel.receiveCurrency,
-                        currencies: viewModel.currencies)
+                        isPresented: $viewModel.routingState.receiveCurrencySelection,
+                        viewModel: .init(
+                            container: viewModel.container,
+                            selectedCurrency: $viewModel.receiveCurrency))
                 }.alert(item: $viewModel.alert) { alert in
                     switch alert {
                     case let .error(message):
@@ -86,10 +85,10 @@ extension CurrencyConverter {
             focusedField: $viewModel.focusedField,
             sellAmount: $viewModel.sellAmount,
             sellCurrencyCode: viewModel.sellCurrency,
-            sellCurrencyCodeSelected: $sellCurrencyCodeSelected,
+            sellCurrencyCodeSelected: $viewModel.routingState.sellCurrencySelection,
             receiveAmount: $viewModel.receiveAmount,
             receiveCurrencyCode: viewModel.receiveCurrency,
-            receiveCurrencyCodeSelected: $receiveCurrencyCodeSelected))
+            receiveCurrencyCodeSelected: $viewModel.routingState.receiveCurrencySelection))
     }
     
     var isDisabled: Bool {
