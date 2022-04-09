@@ -17,11 +17,7 @@ extension AppEnvironment {
         let appState = Store<AppState>(AppState())
         let session = URLSession.shared
         let networkRepositories = makeNetworkRepositories(session: session)
-        let memoryRepositories = makeMemoryRepositories()
-        let services = makeServices(
-            appState: appState,
-            networkRepositories: networkRepositories,
-            memoryRepositories: memoryRepositories)
+        let services = makeServices(appState: appState, networkRepositories: networkRepositories)
         let diContainer = DIContainer(appState: appState, services: services)
         return AppEnvironment(container: diContainer)
     }
@@ -34,30 +30,25 @@ extension AppEnvironment {
         return .init(exchangeRatesRpository: exchangeRatesRepository)
     }
     
-    private static func makeMemoryRepositories() -> MemoryRepositories {
-        let balanceRepository = BalanceRepository()
-        return .init(balanceRepository: balanceRepository)
-    }
     
     private static func makeServices(
         appState: Store<AppState>,
-        networkRepositories: NetworkRepositories,
-        memoryRepositories: MemoryRepositories
+        networkRepositories: NetworkRepositories
     ) -> DIContainer.Services {
         let exchangeRatesService = makeExchangeRatesService(
-            exchangeRatesRepository: networkRepositories.exchangeRatesRpository,
-            balanceRepository: memoryRepositories.balanceRepository)
+            appState: appState,
+            exchangeRatesRepository: networkRepositories.exchangeRatesRpository)
         return .init(currencyExchangeService: exchangeRatesService)
     }
     
     
     private static func makeExchangeRatesService(
-        exchangeRatesRepository: AnyExchangeRatesRepository,
-        balanceRepository: AnyBalanceRepository
+        appState: Store<AppState>,
+        exchangeRatesRepository: AnyExchangeRatesRepository
     ) -> AnyCurrencyExchangeService {
         CurrencyExchangeService(
-            exchangeRatesRepository: exchangeRatesRepository,
-            balanceRepository: balanceRepository)
+            appState: appState,
+            exchangeRatesRepository: exchangeRatesRepository)
     }
     
     
@@ -66,8 +57,5 @@ extension AppEnvironment {
 extension AppEnvironment {
     struct NetworkRepositories {
         let exchangeRatesRpository: AnyExchangeRatesRepository
-    }
-    struct MemoryRepositories {
-        let balanceRepository: AnyBalanceRepository
     }
 }

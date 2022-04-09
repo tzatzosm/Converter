@@ -11,17 +11,16 @@ extension DIContainer {
     struct Services {
         let currencyExchangeService: AnyCurrencyExchangeService
         
-        
         init(currencyExchangeService: AnyCurrencyExchangeService) {
             self.currencyExchangeService = currencyExchangeService
         }
         
         static var stub: Self {
             let exchangeRatesRepository = ExchangeRatesRepository(session: URLSession.shared, baseURL: String())
-            let balanceRepository = BalanceRepository()
+            let appState = Store<AppState>(AppState())
             let service = CurrencyExchangeService(
-                exchangeRatesRepository: exchangeRatesRepository,
-                balanceRepository: balanceRepository)
+                appState: appState,
+                exchangeRatesRepository: exchangeRatesRepository)
             return .init(currencyExchangeService: service)
         }
     }

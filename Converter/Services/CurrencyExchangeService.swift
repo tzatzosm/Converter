@@ -11,11 +11,11 @@ import SwiftUI
 
 enum ExchangeError: Error {
     case balanceMissing
+    case ratesMissing
     case insufficientFunds
 }
 
 struct ExchangeResult {
-    let balance: [String: Float]
     let sellCurrency: String
     let sellAmount: Float
     let receiveCurrency: String
@@ -28,26 +28,24 @@ protocol AnyCurrencyExchangeService {
         exchangeRatesResponse: LoadableSubject<ExchangeRatesResponse>)
     
     func exchange(
-        balance: [String: Float],
-        rates: [String: Float],
         sellAmount: Float,
         sellCurrency: String,
         receiveCurrency: String) throws -> ExchangeResult
 }
 
 class CurrencyExchangeService: AnyCurrencyExchangeService {
-    private var balanceRepository: AnyBalanceRepository
+    private let appState: Store<AppState>
     private let exchangeRatesRepository: AnyExchangeRatesRepository
     
     let timerPublisher: Timer.TimerPublisher
     let cancelBag = CancelBag()
     
     init(
-        exchangeRatesRepository: AnyExchangeRatesRepository,
-        balanceRepository: AnyBalanceRepository
+        appState: Store<AppState>,
+        exchangeRatesRepository: AnyExchangeRatesRepository
     ) {
+        self.appState = appState
         self.exchangeRatesRepository = exchangeRatesRepository
-        self.balanceRepository = balanceRepository
         timerPublisher = Timer.publish(every: 15, on: .main, in: .common)
     }
     
@@ -61,20 +59,22 @@ class CurrencyExchangeService: AnyCurrencyExchangeService {
                 return exchangeRatesRepository.loadExchangeRates()
             }
             .switchToLatest()
-            .sinkToLoadable {
+            .sinkToLoadable { [weak self] in
+                self?.appState.value.rates = $0.value?.rates ?? [:]
                 exchangeRatesResponse.wrappedValue = $0
             }
             .store(in: cancelBag)
     }
     
-    func exchange(balance: [String: Float], rates: [String: Float], sellAmount: Float, sellCurrency: String, receiveCurrency: String) throws -> ExchangeResult {
+    func exchange(sellAmount: Float, sellCurrency: String, receiveCurrency: String) throws -> ExchangeResult {
+        let rates = appState.value.rates
         let comissionFee = try calculateComissionFee(
-            exchangesCount: balanceRepository.exchangesCount,
+            exchangesCount: appState.value.conversionsCount,
             rates: rates,
             sellAmount: sellAmount,
             sellCurrency: sellCurrency)
         let amountCharged = sellAmount + comissionFee
-        guard let sellBalance = balance[sellCurrency] else {
+        guard let sellBalance = appState.value.userBalance[sellCurrency] else {
             throw ExchangeError.balanceMissing
         }
         guard sellBalance > amountCharged else {
@@ -85,14 +85,14 @@ class CurrencyExchangeService: AnyCurrencyExchangeService {
             withRates: rates,
             sellCurrency: sellCurrency,
             receiveCurrency: receiveCurrency)
+        var balance = appState.value.userBalance
         let newSellBalance = sellBalance - amountCharged
         let newReceiveBalance = (balance[receiveCurrency] ?? 0) + receiveAmount
-        var balance = balance
         balance[sellCurrency] = newSellBalance
         balance[receiveCurrency] = newReceiveBalance
-        balanceRepository.incrementExchangesCount()
+        appState.value.userBalance = balance
+        appState.value.conversionsCount += 1
         return .init(
-            balance: balance,
             sellCurrency: sellCurrency,
             sellAmount: sellAmount,
             receiveCurrency: receiveCurrency,

@@ -9,15 +9,12 @@ import SwiftUI
 import Combine
 
 struct AppState: Equatable {
-    var userBalance = UserBalance()
+    var conversionsCount = 0
+    var userBalance: [String: Float] = ["EUR": 1000]
+    var rates: [String: Float] = [:]
+    
     var routing = ViewRouting()
     var system = System()
-}
-
-extension AppState {
-    struct UserBalance: Equatable {
-        var balance: [String: Double] = [:]
-    }
 }
 
 extension AppState {
