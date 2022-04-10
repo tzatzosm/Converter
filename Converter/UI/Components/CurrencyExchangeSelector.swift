@@ -43,13 +43,11 @@ struct CurrencyExchangeSelector: View {
         }
         .onChange(of: sellFocused) {
             if $0 {
-                print("sell")
                 focusedField = .sell
             }
         }
         .onChange(of: receiveFocused) {
             if $0 {
-                print("receive")
                 focusedField = .receive
             }
         }

@@ -91,6 +91,11 @@ extension CurrencyConverter {
                     .filter { [weak self] _ in self?.focusedField == .receive }
                     .removeDuplicates()
                     .sink { [weak self] value in self?.receiveAmountValueDidChange(value) }
+                Publishers.Merge($sellCurrency, $receiveCurrency).sink { _ in
+                    self.focusedField = nil
+                    self.sellAmount = nil
+                    self.receiveAmount = nil
+                }
             }
         }
     }

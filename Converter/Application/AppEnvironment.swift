@@ -23,10 +23,10 @@ extension AppEnvironment {
     }
     
     private static func makeNetworkRepositories(session: URLSession) -> NetworkRepositories {
-//        let exchangeRatesRepository = ExchangeRatesRepository(
-//            session: session,
-//            baseURL: "http://api.exchangeratesapi.io/")
-        let exchangeRatesRepository = MockExchangeRatesRepository()
+        let exchangeRatesRepository = ExchangeRatesRepository(
+            session: session,
+            baseURL: "http://api.exchangeratesapi.io/")
+//        let exchangeRatesRepository = MockExchangeRatesRepository()
         return .init(exchangeRatesRpository: exchangeRatesRepository)
     }
     
